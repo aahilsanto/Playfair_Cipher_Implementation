@@ -146,4 +146,8 @@ print("Decrypted Text:", decrypted_text)
 
 ## Output:
 
+<img width="667" height="492" alt="image" src="https://github.com/user-attachments/assets/f58aedc3-8aaa-4ef2-a5b2-78ad46903e8d" />
+
+## Result:
+
 Thus the program to implement Playfair using python is done successfully.
