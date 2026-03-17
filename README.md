@@ -33,115 +33,61 @@ STEP-5: Display the obtained cipher text.
 
 ## Program:
 
-```
-def generate_matrix(key):
-    key = key.upper().replace("J", "I")
-    matrix = []
-    used = set()
+```python
 
-    for ch in key:
-        if ch.isalpha() and ch not in used:
-            used.add(ch)
-            matrix.append(ch)
+def build_matrix(key):
+    key = "".join(dict.fromkeys((key + "ABCDEFGHIKLMNOPQRSTUVWXYZ").upper().replace("J", "I")))
+    return [list(key[i:i+5]) for i in range(0, 25, 5)]
 
-    for ch in "ABCDEFGHIKLMNOPQRSTUVWXYZ":
-        if ch not in used:
-            used.add(ch)
-            matrix.append(ch)
+def find_pos(matrix, ch):
+    for i, row in enumerate(matrix):
+        if ch in row:
+            return i, row.index(ch)
 
-    return [matrix[i:i+5] for i in range(0, 25, 5)]
-
-def find_position(matrix, ch):
-    for i in range(5):
-        for j in range(5):
-            if matrix[i][j] == ch:
-                return i, j
-                
-def preprocess_text(text):
-    text = text.upper().replace("J", "I")
-    prepared = ""
+def prepare(text):
+    text = "".join(filter(str.isalpha, text.upper().replace("J", "I")))
+    result = ""
     i = 0
     while i < len(text):
-        if not text[i].isalpha():
-            i += 1
-            continue
-        ch1 = text[i]
-        
+        result += text[i]
         if i + 1 < len(text):
-            ch2 = text[i + 1]
-            if not ch2.isalpha():
-                prepared += ch1
-                i += 1
-            elif ch1 == ch2:
-                prepared += ch1 + "X"
-                i += 1
-            else:
-                prepared += ch1 + ch2
-                i += 2
+            result += "X" if text[i] == text[i+1] else text[i+1]
+            i += 2
         else:
-            prepared += ch1 + "X"
+            result += "X"
             i += 1
+    return result
 
-    if len(prepared) % 2 != 0:
-        prepared += "X"
-    return prepared
-
-def encrypt(text, matrix):
-    cipher = ""
+def playfair(text, matrix, mode):
+    step = 1 if mode == "encrypt" else -1
+    result = ""
     for i in range(0, len(text), 2):
-        ch1, ch2 = text[i], text[i+1]
-        r1, c1 = find_position(matrix, ch1)
-        r2, c2 = find_position(matrix, ch2)
+        r1, c1 = find_pos(matrix, text[i])
+        r2, c2 = find_pos(matrix, text[i+1])
+        if r1 == r2:
+            result += matrix[r1][(c1 + step) % 5] + matrix[r2][(c2 + step) % 5]
+        elif c1 == c2:
+            result += matrix[(r1 + step) % 5][c1] + matrix[(r2 + step) % 5][c2]
+        else:
+            result += matrix[r1][c2] + matrix[r2][c1]
+    return result
 
-        if r1 == r2: 
-            cipher += matrix[r1][(c1 + 1) % 5]
-            cipher += matrix[r2][(c2 + 1) % 5]
+# --- Main ---
+key    = input("Enter key: ")
+matrix = build_matrix(key)
 
-        elif c1 == c2:  
-            cipher += matrix[(r1 + 1) % 5][c1]
-            cipher += matrix[(r2 + 1) % 5][c2]
-
-        else:  
-            cipher += matrix[r1][c2]
-            cipher += matrix[r2][c1]
-    return cipher
-
-def decrypt(cipher, matrix):
-    plain = ""
-    for i in range(0, len(cipher), 2):
-        ch1, ch2 = cipher[i], cipher[i+1]
-        r1, c1 = find_position(matrix, ch1)
-        r2, c2 = find_position(matrix, ch2)
-
-        if r1 == r2: 
-            plain += matrix[r1][(c1 - 1) % 5]
-            plain += matrix[r2][(c2 - 1) % 5]
-
-        elif c1 == c2:  
-            plain += matrix[(r1 - 1) % 5][c1]
-            plain += matrix[(r2 - 1) % 5][c2]
-
-        else: 
-            plain += matrix[r1][c2]
-            plain += matrix[r2][c1]
-
-    return plain
-
-key = input("Enter the key: ")
-matrix = generate_matrix(key)
 print("\nPlayfair Matrix:")
 for row in matrix:
     print(" ".join(row))
 
-plain = input("\nEnter the plain text: ")
+text      = input("\nEnter plain text: ")
+prepared  = prepare(text)
+encrypted = playfair(prepared, matrix, "encrypt")
+decrypted = playfair(encrypted, matrix, "decrypt")
 
-prepared_text = preprocess_text(plain)
-cipher_text = encrypt(prepared_text, matrix)
-decrypted_text = decrypt(cipher_text, matrix)
-
-print("\nPrepared Text :", prepared_text)
-print("Encrypted Text:", cipher_text)
-print("Decrypted Text:", decrypted_text)
+print(f"\nPrepared : {prepared}")
+print(f"Encrypted: {encrypted}")
+print(f"Decrypted: {decrypted}")
 ```
 
 ## Output:
